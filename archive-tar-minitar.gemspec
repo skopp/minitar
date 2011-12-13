@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = %{archive-tar-minitar}
-  s.version = %{0.5.2}
+  s.version = %{0.5.2.1}
   s.author = %{Austin Ziegler, Mauricio Fernandez}
   s.email = %{minitar@halostatue.ca}
   s.homepage = %{http://rubyforge.org/projects/ruwiki/}
