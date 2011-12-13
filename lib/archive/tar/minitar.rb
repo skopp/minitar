@@ -331,7 +331,7 @@ module Archive::Tar::Minitar
       header = { :name => name, :mode => opts[:mode], :mtime => opts[:mtime],
         :size => opts[:size], :gid => opts[:gid], :uid => opts[:uid],
         :prefix => prefix }
-      header = Archive::Tar::PosixHeader.new(header).to_s 
+      header = Archive::Tar::PosixHeader.new(header).to_s
       @io.write(header)
 
       os = BoundedStream.new(@io, opts[:size])
@@ -454,7 +454,7 @@ module Archive::Tar::Minitar
       def getc; raise ClosedStream;  end
       def rewind; raise ClosedStream;  end
     end
-      
+
       # EntryStreams are pseudo-streams on top of the main data stream.
     class EntryStream
       Archive::Tar::PosixHeader::FIELDS.each do |field|
@@ -572,7 +572,7 @@ module Archive::Tar::Minitar
       ensure
         reader.close
       end
-      
+
       res
     end
 
@@ -754,6 +754,25 @@ module Archive::Tar::Minitar
 
         yield :file_done, entry.full_name, stats if block_given?
       end
+    rescue Errno::EISDIR => e
+      dest = File.join(destdir, entry.full_name)
+
+      yield :dir, entry.full_name, stats if block_given?
+
+      if Archive::Tar::Minitar.dir?(dest)
+        begin
+          FileUtils.chmod(entry.mode, dest)
+        rescue Exception
+          nil
+        end
+      else
+        FileUtils.mkdir_p(dest, :mode => entry.mode)
+        FileUtils.chmod(entry.mode, dest)
+      end
+
+      fsync_dir(dest)
+      fsync_dir(File.join(dest, ".."))
+      return
     end
 
       # Returns the Reader object for direct access.
@@ -894,7 +913,7 @@ module Archive::Tar::Minitar
       else
         name = entry
       end
-      
+
       name = name.sub(%r{\./}, '')
       stat = File.stat(name)
       stats[:mode]   ||= stat.mode
